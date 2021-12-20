@@ -3,19 +3,12 @@ package rest
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/jackc/pgx/v4"
 )
 
-type Database struct {
-	conn *pgx.Conn
-}
-
-func StartServer(host string, port int, conn *pgx.Conn) {
-	db := Database{conn: conn}
-
+func StartServer(host string, port int) {
 	http.HandleFunc("/", hello)
-	http.HandleFunc("/alarms", db.alarms)
+	http.HandleFunc("/alarms", alarms)
+	http.HandleFunc("/active-alarms", activeAlarms)
 
 	//conf := NewFromJSON("config.json")
 
@@ -30,14 +23,30 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello %s", "world")
 }
 
-func (db Database) alarms(w http.ResponseWriter, r *http.Request) {
+func alarms(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		createAlarm(w, r, db)
+		createAlarm(w, r)
 		return
 	}
 
 	if r.Method == "GET" {
-		getAllAlarms(w, r, db)
+		getAllAlarms(w, r)
+		return
+	}
+
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	w.Write([]byte("<h1>Method Not Allowed</h1>"))
+	return
+}
+
+func activeAlarms(w http.ResponseWriter, r *http.Request) {
+	// if r.Method == "POST" {
+	// 	createAlarm(w, r)
+	// 	return
+	// }
+
+	if r.Method == "GET" {
+		getAllActiveAlarms(w, r)
 		return
 	}
 

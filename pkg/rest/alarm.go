@@ -9,7 +9,7 @@ import (
 	"schilli.com/alarm-backend/pkg/storage"
 )
 
-func createAlarm(w http.ResponseWriter, r *http.Request, db Database) {
+func createAlarm(w http.ResponseWriter, r *http.Request) {
 	var a storage.Alarm
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&a); err != nil {
@@ -19,15 +19,21 @@ func createAlarm(w http.ResponseWriter, r *http.Request, db Database) {
 	}
 	a.Timestamp = time.Now()
 
-	if err := storage.InsertAlarm(db.conn, a); err != nil {
+	if err := storage.InsertAlarm(a); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+	if a.Alarm {
+		if err := storage.InsertActiveAlarm(a); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusCreated)
 }
 
-func getAllAlarms(w http.ResponseWriter, r *http.Request, db Database) {
-	aa, err := storage.GetLastAlarms(db.conn, 100)
+func getAllAlarms(w http.ResponseWriter, r *http.Request) {
+	aa, err := storage.GetLastAlarms(100)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

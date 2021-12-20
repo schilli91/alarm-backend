@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/joho/godotenv"
 )
 
 type Alarm struct {
@@ -27,10 +25,6 @@ type dbConfig struct {
 }
 
 func newDbConfig() dbConfig {
-	err := godotenv.Overload()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	// Let's set some initial default variables
 	c := dbConfig{
 		user: os.Getenv("DB_USER"),
@@ -53,12 +47,16 @@ func Connect() *pgx.Conn {
 	return conn
 }
 
-func GetLastAlarms(conn *pgx.Conn, limit int) ([]Alarm, error) {
+func GetLastAlarms(limit int) ([]Alarm, error) {
+	conn := Connect()
+	defer conn.Close(context.Background())
+
 	aa := []Alarm{}
 
 	q := "select timestamp, alarm from alarms ORDER BY timestamp DESC LIMIT $1"
 	rows, err := conn.Query(context.Background(), q, limit)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to query database: %v\n", err)
 		return aa, err
 	}
 
@@ -73,21 +71,27 @@ func GetLastAlarms(conn *pgx.Conn, limit int) ([]Alarm, error) {
 		aa = append(aa, a)
 	}
 
-	fmt.Printf("Fetched: %v\n", aa)
+	// fmt.Printf("Fetched: %v\n", aa)
 	return aa, nil
 }
 
-func InsertAlarm(conn *pgx.Conn, a Alarm) error {
+func InsertAlarm(a Alarm) error {
+	conn := Connect()
+	defer conn.Close(context.Background())
+
 	_, err := conn.Exec(context.Background(), "INSERT INTO alarms VALUES ($1, $2)", a.Alarm, a.Timestamp)
 	if err != nil {
-		fmt.Println("Unable to insert due to: ", err)
+		fmt.Printf("Unable to insert due to: %v.\n", err)
 		return errors.New("Insert failed.")
 	}
 	fmt.Println("Insertion succesful")
 	return nil
 }
 
-func ClearAlarms(conn *pgx.Conn) error {
+func ClearAlarms() error {
+	conn := Connect()
+	defer conn.Close(context.Background())
+
 	_, err := conn.Exec(context.Background(), "DELETE FROM alarms")
 	if err != nil {
 		fmt.Println("Unable to delete due to: ", err)

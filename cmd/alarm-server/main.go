@@ -1,21 +1,25 @@
 package main
 
 import (
-	"context"
+	"log"
 
+	"github.com/joho/godotenv"
 	"schilli.com/alarm-backend/pkg/rest"
 	"schilli.com/alarm-backend/pkg/storage"
 )
 
 func main() {
-	conn := storage.Connect()
-	defer conn.Close(context.Background())
+	err := godotenv.Overload()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	// storage.GetLastAlarm(conn)
-	// storage.InsertAlarm(conn, storage.Alarm{Timestamp: time.Now(), Alarm: false})
-	// storage.GetLastAlarm(conn)
-	storage.ClearAlarms(conn)
-	// storage.GetLastAlarm(conn)
+	// storage.GetLastAlarm()
+	// storage.InsertAlarm(storage.Alarm{Timestamp: time.Now(), Alarm: false})
+	// storage.GetLastAlarm()
+	storage.ClearAlarms()
+	storage.ClearActiveAlarms()
+	// storage.GetLastAlarm()
 
-	rest.StartServer("127.0.0.1", 8080, conn)
+	rest.StartServer("127.0.0.1", 8080)
 }

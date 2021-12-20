@@ -1,16 +1,13 @@
-package calling
+package alarming
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 type config struct {
@@ -22,10 +19,6 @@ type config struct {
 }
 
 func newConfig() config {
-	err := godotenv.Overload()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	// Let's set some initial default variables
 	c := config{
 		accountSid:   os.Getenv("TWILIO_ACCOUNT_SID"),
@@ -38,6 +31,7 @@ func newConfig() config {
 }
 
 func Call() {
+	// TODO: Move config to main? At least reading .env file.
 	cfg := newConfig()
 
 	// fmt.Printf("accountSid: %s\n", cfg.accountSid)
