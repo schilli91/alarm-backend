@@ -2,10 +2,10 @@ package rest
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"schilli.com/alarm-backend/pkg/storage"
 )
 
@@ -13,7 +13,9 @@ func createAlarm(w http.ResponseWriter, r *http.Request) {
 	var a storage.Alarm
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&a); err != nil {
-		fmt.Println("Decode failed: ", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Decode failed.")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

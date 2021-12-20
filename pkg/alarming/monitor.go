@@ -2,9 +2,9 @@ package alarming
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"schilli.com/alarm-backend/pkg/storage"
 )
 
@@ -15,18 +15,20 @@ func MonitorAlarms() {
 	for {
 		alarms, err := storage.GetAllActiveAlarms()
 		if err != nil {
-			fmt.Printf("Getting active alarms failed: %v\n", err)
+			logrus.Error("Getting active alarms failed: %v\n", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 
 		if len(alarms) == 0 {
-			fmt.Printf("No active errors.\n")
+			logrus.Info("No active errors.\n")
 			time.Sleep(10 * time.Second)
 			continue
 		}
 
+		logrus.Info("Alarm is active. Calling!")
 		Call()
+
 		storage.ClearActiveAlarms()
 		time.Sleep(30 * time.Second)
 	}

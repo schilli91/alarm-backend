@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 type config struct {
@@ -62,14 +64,20 @@ func Call() {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 		err := json.Unmarshal(bodyBytes, &data)
 		if err != nil {
-			fmt.Println("Error unmarshalling Twilio response.")
+			logrus.Error("Error unmarshalling Twilio response.")
 		}
-		fmt.Println(data["sid"])
+		logrus.WithFields(logrus.Fields{
+			"Call SID": data["sid"],
+		}).Info("Call successful.")
 	} else {
-		fmt.Println(resp.Status)
-		fmt.Println(resp.Request.GetBody())
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			logrus.Error("Can't read response body.")
+		}
 
-		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("response Body:", string(body))
+		logrus.WithFields(logrus.Fields{
+			"Status": resp.Status,
+			"Body":   string(body),
+		}).Error("Call failed.")
 	}
 }

@@ -3,7 +3,8 @@ package storage
 import (
 	"context"
 	"errors"
-	"fmt"
+
+	"github.com/sirupsen/logrus"
 )
 
 func GetAllActiveAlarms() ([]Alarm, error) {
@@ -22,14 +23,15 @@ func GetAllActiveAlarms() ([]Alarm, error) {
 		var a Alarm
 		err := rows.Scan(&a.Timestamp, &a.Alarm)
 		if err != nil {
-			fmt.Println("Unable to read due to: ", err)
+			logrus.WithFields(logrus.Fields{
+				"Error": err,
+			}).Error("Read failed.")
 			return []Alarm{}, errors.New("Select failed.")
 		}
 
 		aa = append(aa, a)
 	}
 
-	// fmt.Printf("Fetched: %v\n", aa)
 	return aa, nil
 }
 
@@ -39,10 +41,14 @@ func InsertActiveAlarm(a Alarm) error {
 
 	_, err := conn.Exec(context.Background(), "INSERT INTO active_alarms VALUES ($1, $2)", a.Alarm, a.Timestamp)
 	if err != nil {
-		fmt.Println("Unable to insert due to: ", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Insert failed.")
 		return errors.New("Insert failed.")
 	}
-	fmt.Println("Insertion succesful")
+	logrus.WithFields(logrus.Fields{
+		"Alarm": a,
+	}).Info("Insertion succesful.")
 	return nil
 }
 
@@ -52,9 +58,11 @@ func ClearActiveAlarms() error {
 
 	_, err := conn.Exec(context.Background(), "DELETE FROM active_alarms")
 	if err != nil {
-		fmt.Println("Unable to delete due to: ", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Deletion failed.")
 		return errors.New("Delete failed.")
 	}
-	fmt.Println("Clear succesful")
+	logrus.Info("Clear succesful.")
 	return nil
 }

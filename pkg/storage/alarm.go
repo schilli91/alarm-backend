@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/sirupsen/logrus"
 )
 
 type Alarm struct {
@@ -41,7 +42,9 @@ func Connect() *pgx.Conn {
 	cfg := newDbConfig()
 	conn, err := pgx.Connect(context.Background(), cfg.connStr)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Database connection failed.")
 		os.Exit(1)
 	}
 	return conn
@@ -56,7 +59,9 @@ func GetLastAlarms(limit int) ([]Alarm, error) {
 	q := "select timestamp, alarm from alarms ORDER BY timestamp DESC LIMIT $1"
 	rows, err := conn.Query(context.Background(), q, limit)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to query database: %v\n", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Read failed.")
 		return aa, err
 	}
 
@@ -64,14 +69,15 @@ func GetLastAlarms(limit int) ([]Alarm, error) {
 		var a Alarm
 		err := rows.Scan(&a.Timestamp, &a.Alarm)
 		if err != nil {
-			fmt.Println("Unable to read due to: ", err)
+			logrus.WithFields(logrus.Fields{
+				"Error": err,
+			}).Error("Read failed.")
 			return []Alarm{}, errors.New("Select failed.")
 		}
 
 		aa = append(aa, a)
 	}
 
-	// fmt.Printf("Fetched: %v\n", aa)
 	return aa, nil
 }
 
@@ -81,10 +87,12 @@ func InsertAlarm(a Alarm) error {
 
 	_, err := conn.Exec(context.Background(), "INSERT INTO alarms VALUES ($1, $2)", a.Alarm, a.Timestamp)
 	if err != nil {
-		fmt.Printf("Unable to insert due to: %v.\n", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Insert failed.")
 		return errors.New("Insert failed.")
 	}
-	fmt.Println("Insertion succesful")
+	logrus.Info("Insertion succesful.")
 	return nil
 }
 
@@ -94,9 +102,11 @@ func ClearAlarms() error {
 
 	_, err := conn.Exec(context.Background(), "DELETE FROM alarms")
 	if err != nil {
-		fmt.Println("Unable to delete due to: ", err)
+		logrus.WithFields(logrus.Fields{
+			"Error": err,
+		}).Error("Deletion failed.")
 		return errors.New("Delete failed.")
 	}
-	fmt.Println("Clear succesful")
+	logrus.Info("Clear succesful.")
 	return nil
 }

@@ -6,7 +6,6 @@ import (
 )
 
 func StartServer(host string, port int) {
-	http.HandleFunc("/", hello)
 	http.HandleFunc("/alarms", alarms)
 	http.HandleFunc("/active-alarms", activeAlarms)
 
@@ -16,11 +15,6 @@ func StartServer(host string, port int) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%v\n", r.Method)
-	fmt.Fprintf(w, "Hello %s", "world")
 }
 
 func alarms(w http.ResponseWriter, r *http.Request) {
