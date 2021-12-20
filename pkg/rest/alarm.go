@@ -24,6 +24,7 @@ func createAlarm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if a.Alarm {
+		// TODO: May be replaced by trigger in database.
 		if err := storage.InsertActiveAlarm(a); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
